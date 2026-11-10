@@ -2,6 +2,8 @@
 
 政府のオープンデータを検索し、データセットの説明、CSVやPDFなどの配布URL、カタログの更新履歴を取得できます。読み取り専用で、APIキーの設定は不要です。[uv](https://docs.astral.sh/uv/) と Git が必要です。Python 3.12以上に対応しています。
 
+[MCP登録](#mcpクライアントに登録する) · [CLI](#cliで使う) · [Pythonライブラリ](#pythonライブラリとして使う)
+
 ## MCPクライアントに登録する
 
 公開GitHubリポジトリから `uvx` で起動します。初回は依存関係の準備に時間がかかることがあります。
@@ -65,7 +67,7 @@ Codexのデスクトップアプリでは、設定の「MCP servers」でSTDIO�
 
 `search_resources` が返す `package_id` は `get_dataset` や `get_dataset_history` に渡せます。配布ファイルの取得や内容の変換は別途行ってください。各ツールは `limit`（1〜100、既定10）と `offset`（0〜10000、既定0）でページ送りできます。履歴に総件数はないため、返った件数が `limit` 未満なら最後のページです。履歴にはカタログのイベント日時と種別が含まれます。
 
-## CLI
+## CLIで使う
 
 CLIやPythonライブラリを手元で使う場合は、リポジトリをクローンして準備します。
 
@@ -84,9 +86,15 @@ uv run egov-data-mcp get-dataset-history --dataset-id cao_20140904_0477 --limit 
 
 結果は標準出力にUTF-8のJSONで出力します。コマンドの引数は `uv run egov-data-mcp search-datasets --help` で確認できます。
 
-## Pythonライブラリ
+## Pythonライブラリとして使う
 
-パッケージをインストールしたPython環境で、下記の非同期関数を直接呼び出せます。
+自分のPythonプロジェクト（`pyproject.toml` があるディレクトリ）で依存関係に追加します。
+
+```sh
+uv add "git+https://github.com/koizumikento/egov-data-mcp.git@main"
+```
+
+次のコードを `example.py` に保存し、同じディレクトリで `uv run python example.py` を実行します。
 
 ```python
 import asyncio
