@@ -1,29 +1,54 @@
 # egov-data-mcp
 
-e-Govデータポータルの公式APIを参照する読み取り専用のMCPサーバーです。Python 3.12以上とuv（0.13.4で検証）を使います。上流APIのキー設定は不要です。
+政府のオープンデータを検索し、データセットの説明とCSVなどの配布URLを取得できます。読み取り専用で、APIキーの設定は不要です。[uv](https://docs.astral.sh/uv/) と Git が必要です。Python 3.12以上に対応しています。
 
-## MCPクライアント設定
+## MCPクライアントに登録する
 
-GitHubリポジトリへのアクセス権がある環境でクローンします。
+公開GitHubリポジトリから `uvx` で起動します。初回は依存関係の準備に時間がかかることがあります。
+
+### Codex
 
 ```sh
-git clone https://github.com/koizumikento/egov-data-mcp.git
-cd egov-data-mcp
-uv sync --locked
+codex mcp add egov-data-mcp -- uvx --python 3.12 --from git+https://github.com/koizumikento/egov-data-mcp.git@main egov-data-mcp
+codex mcp list
 ```
 
-クライアントの設定に、クローン先の絶対パスを指定します。
+`codex mcp list` で登録を確認し、Codexの新しいセッションで `/mcp` を開くと、接続状態を確認できます。[Codexの公式設定ガイド](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
+
+Codexのデスクトップアプリでは、設定の「MCP servers」でSTDIOサーバーを追加し、下のJSON例と同じコマンド・引数を指定する方法もあります。
+
+### Claude Desktop / Cursor
+
+次のファイルに設定します。
+
+- Claude Desktop（Windows） `%APPDATA%/Claude/claude_desktop_config.json`
+- Claude Desktop（macOS） `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Cursor `.cursor/mcp.json`（プロジェクト内）
+
+既に `mcpServers` がある場合は、その中にサーバーの項目を追加してください。保存後にクライアントを再起動し、ツールが表示されるか確認します。[設定ファイルの場所と接続手順](https://py.sdk.modelcontextprotocol.io/get-started/real-host/)
 
 ```json
 {
   "mcpServers": {
     "egov-data-mcp": {
-      "command": "uv",
-      "args": ["--directory", "/absolute/path/to/egov-data-mcp", "run", "--locked", "egov-data-mcp"]
+      "command": "uvx",
+      "args": [
+        "--python",
+        "3.12",
+        "--from",
+        "git+https://github.com/koizumikento/egov-data-mcp.git@main",
+        "egov-data-mcp"
+      ]
     }
   }
 }
 ```
+
+`uvx` が見つからない場合は、設定のコマンドに実行ファイルの絶対パスを指定してください。
+
+登録後は、チャットで次のように聞けます。
+
+> 防災に関する政府のデータセットを3件探して、配布URLも教えて。
 
 ## ツール
 
@@ -35,6 +60,14 @@ uv sync --locked
 データセットのメタデータと配布URLを返します。配布ファイルの取得や内容の変換は別途行ってください。
 
 ## CLI
+
+CLIやPythonライブラリを手元で使う場合は、リポジトリをクローンして準備します。
+
+```sh
+git clone https://github.com/koizumikento/egov-data-mcp.git
+cd egov-data-mcp
+uv sync --locked
+```
 
 ```sh
 uv run egov-data-mcp search-datasets --query "防災" --limit 1
