@@ -8,7 +8,7 @@ from mcp import Client, StdioServerParameters
 from mcp.types import TextContent
 
 from egov_data_mcp import create_server
-from egov_data_mcp.server import BASE_URL
+from egov_data_mcp.client import BASE_URL
 
 
 @pytest.mark.asyncio
