@@ -27,5 +27,8 @@ jobs:
           import asyncio
           from egov_data_mcp import create_server
 
-          assert len(asyncio.run(create_server().list_tools())) == 2
+          tools = asyncio.run(create_server().list_tools())
+          assert {tool.name for tool in tools} == {
+              "search_datasets", "get_dataset", "search_resources", "get_dataset_history",
+          }
           PY

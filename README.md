@@ -1,6 +1,6 @@
 # egov-data-mcp
 
-政府のオープンデータを検索し、データセットの説明とCSVなどの配布URLを取得できます。読み取り専用で、APIキーの設定は不要です。[uv](https://docs.astral.sh/uv/) と Git が必要です。Python 3.12以上に対応しています。
+政府のオープンデータを検索し、データセットの説明、CSVやPDFなどの配布URL、カタログの更新履歴を取得できます。読み取り専用で、APIキーの設定は不要です。[uv](https://docs.astral.sh/uv/) と Git が必要です。Python 3.12以上に対応しています。
 
 ## MCPクライアントに登録する
 
@@ -50,14 +50,20 @@ Codexのデスクトップアプリでは、設定の「MCP servers」でSTDIO�
 
 > 防災に関する政府のデータセットを3件探して、配布URLも教えて。
 
+> 内閣府の防災データセットをPDFの配布があるものに絞って、見つかったデータセットの更新履歴も見せて。
+
 ## ツール
 
 | ツール | 用途 |
 | --- | --- |
-| `search_datasets` | キーワードでデータセットを検索 |
+| `search_datasets` | キーワードで検索。組織、配布形式、更新日で絞り込み可 |
 | `get_dataset` | データセットIDで詳細と配布先の一覧を取得 |
+| `search_resources` | 配布ファイル名で検索し、配布URLと親データセットのIDを取得 |
+| `get_dataset_history` | データセットIDでカタログの更新イベントを取得 |
 
-データセットのメタデータと配布URLを返します。配布ファイルの取得や内容の変換は別途行ってください。
+`search_datasets` の `organization` には組織名の代わりにカタログの組織IDを指定します。例えば内閣府は `org_0400` です。`file_format` には `PDF` や `CSV` を指定します。`updated_since` と `updated_until` は `YYYY-MM-DD` 形式で、UTCで指定日を含みます。組み合わせた条件をすべて満たすデータセットを返します。[組織一覧](https://data.e-gov.go.jp/data/ja/organization)
+
+`search_resources` が返す `package_id` は `get_dataset` や `get_dataset_history` に渡せます。配布ファイルの取得や内容の変換は別途行ってください。各ツールは `limit`（1〜100、既定10）と `offset`（0〜10000、既定0）でページ送りできます。履歴に総件数はないため、返った件数が `limit` 未満なら最後のページです。履歴にはカタログのイベント日時と種別が含まれます。
 
 ## CLI
 
@@ -70,8 +76,10 @@ uv sync --locked
 ```
 
 ```sh
-uv run egov-data-mcp search-datasets --query "防災" --limit 1
+uv run egov-data-mcp search-datasets --query "防災" --organization org_0400 --format PDF --updated-since 2023-06-01 --limit 1
 uv run egov-data-mcp get-dataset --dataset-id cao_20140904_0477 --limit 1
+uv run egov-data-mcp search-resources --query "統計" --limit 1
+uv run egov-data-mcp get-dataset-history --dataset-id cao_20140904_0477 --limit 1
 ```
 
 結果は標準出力にUTF-8のJSONで出力します。コマンドの引数は `uv run egov-data-mcp search-datasets --help` で確認できます。
@@ -83,13 +91,18 @@ uv run egov-data-mcp get-dataset --dataset-id cao_20140904_0477 --limit 1
 ```python
 import asyncio
 
-from egov_data_mcp import search_datasets
+from egov_data_mcp import get_dataset_history, search_datasets
 
-result = asyncio.run(search_datasets(query="防災", limit=1))
-print(result)
+async def main():
+    result = await search_datasets("防災", limit=1, organization="org_0400", file_format="PDF")
+    if result["datasets"]:
+        dataset_id = result["datasets"][0]["id"]
+        print(await get_dataset_history(dataset_id, limit=1))
+
+asyncio.run(main())
 ```
 
-公開関数 `search_datasets`、`get_dataset` を利用できます。イベントループがある環境では、関数を直接 `await` します。
+上の表にある4ツールは、同名の非同期関数として利用できます。イベントループがある環境では、関数を直接 `await` します。
 
 ## 出典と利用条件
 
